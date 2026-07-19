@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kodex13 Countdown and Sudoku</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <canvas id="confetti-canvas" aria-hidden="true"></canvas>
+    <main class="page-shell">
+        <section class="hero-panel" aria-labelledby="page-title">
+            <p class="eyebrow">Made by Smarsian</p>
+            <h1 id="page-title">Kodex's 23rd Birthday Countdown (August 31st)</h1>
+            <div class="countdown-card" aria-live="polite">
+                <div id="countdown" class="countdown-grid">
+                    <div class="time-block">
+                        <span id="days" class="time-value">00</span>
+                        <span class="time-label">Days</span>
+                    </div>
+                    <div class="time-block">
+                        <span id="hours" class="time-value">00</span>
+                        <span class="time-label">Hours</span>
+                    </div>
+                    <div class="time-block">
+                        <span id="minutes" class="time-value">00</span>
+                        <span class="time-label">Minutes</span>
+                    </div>
+                    <div class="time-block">
+                        <span id="seconds" class="time-value">00</span>
+                        <span class="time-label">Seconds</span>
+                    </div>
+                </div>
+                <p id="countdown-message" class="countdown-message">Countdown active</p>
+            </div>
+        </section>
+
+        <section class="game-panel" aria-labelledby="sudoku-title">
+            <div class="section-header">
+                <div>
+                    <h2 id="sudoku-title">Sudoku</h2>
+                </div>
+
+                <div class="difficulty-switch" role="group" aria-label="Select Sudoku difficulty">
+                    <button class="difficulty-button" data-difficulty="beginner" type="button">Beginner</button>
+                    <button class="difficulty-button is-active" data-difficulty="easy" type="button">Easy</button>
+                    <button class="difficulty-button" data-difficulty="medium" type="button">Medium</button>
+                    <button class="difficulty-button" data-difficulty="hard" type="button">Hard</button>
+                    <button class="difficulty-button" data-difficulty="expert" type="button">Expert</button>
+                </div>
+            </div>
+
+            <div class="game-meta">
+                <p id="puzzle-status" class="status-pill">Fill every empty square with digits 1 to 9.</p>
+                <p id="timer-display" class="status-pill timer-pill" aria-live="polite">Time: 00:00</p>
+                <button id="new-game-button" class="new-game-button" type="button">New Puzzle</button>
+            </div>
+
+            <div class="board-wrapper">
+                <div id="sudoku-board" class="sudoku-board" role="grid" aria-label="Sudoku puzzle"></div>
+            </div>
+
+            <div id="completion-panel" class="completion-panel" hidden>
+                <h3>Congratulations!</h3>
+                <p id="completion-message">You solved the puzzle. Pick another random board whenever you want.</p>
+                <button id="play-again-button" class="play-again-button" type="button">Play Another Puzzle</button>
+            </div>
+        </section>
+
+        <section class="stats-panel" aria-labelledby="stats-title">
+            <div class="section-header stats-header">
+                <div>
+                    <p class="eyebrow">Stats Page</p>
+                    <h2 id="stats-title">Sudoku Results</h2>
+                </div>
+                <p class="stats-subtitle">Your completed puzzle history is saved in this browser.</p>
+            </div>
+
+            <div class="stats-grid">
+                <article class="stats-card">
+                    <span class="stats-label">Total Completed</span>
+                    <strong id="total-completed" class="stats-value">0</strong>
+                </article>
+                <article class="stats-card">
+                    <span class="stats-label">Best Overall Time</span>
+                    <strong id="best-overall-time" class="stats-value">--:--</strong>
+                </article>
+                <article class="stats-card">
+                    <span class="stats-label">Average Solve Time</span>
+                    <strong id="average-time" class="stats-value">--:--</strong>
+                </article>
+                <article class="stats-card">
+                    <span class="stats-label">Last Solve</span>
+                    <strong id="last-solve" class="stats-value stats-value-small">No puzzles solved yet</strong>
+                </article>
+            </div>
+
+            <div class="stats-table-wrap">
+                <table class="stats-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Difficulty</th>
+                            <th scope="col">Completed</th>
+                            <th scope="col">Best Time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <th scope="row">Beginner</th>
+                            <td id="beginner-completed">0</td>
+                            <td id="beginner-best-time">--:--</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Easy</th>
+                            <td id="easy-completed">0</td>
+                            <td id="easy-best-time">--:--</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Medium</th>
+                            <td id="medium-completed">0</td>
+                            <td id="medium-best-time">--:--</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Hard</th>
+                            <td id="hard-completed">0</td>
+                            <td id="hard-best-time">--:--</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Expert</th>
+                            <td id="expert-completed">0</td>
+                            <td id="expert-best-time">--:--</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="riddle-panel" aria-labelledby="riddle-title">
+            <div class="section-header stats-header">
+                <div>
+                    <p class="eyebrow">Einstein Riddle</p>
+                    <h2 id="riddle-title">Random Logic Puzzle</h2>
+                </div>
+                <p class="stats-subtitle">Solve the clues by matching each house with one color, one drink, one pet, and one vehicle.</p>
+            </div>
+
+            <div class="game-meta">
+                <p id="riddle-status" class="status-pill">Use the clues to complete all three houses correctly across all four categories.</p>
+                <p id="riddle-timer-display" class="status-pill timer-pill" aria-live="polite">Time: 00:00</p>
+                <button id="new-riddle-button" class="new-riddle-button" type="button">New Riddle</button>
+            </div>
+
+            <div class="riddle-layout">
+                <article class="riddle-card">
+                    <h3>Clues</h3>
+                    <ol id="riddle-clues" class="clue-list"></ol>
+                </article>
+
+                <article class="riddle-card">
+                    <h3>House Grid</h3>
+                    <div class="stats-table-wrap">
+                        <table class="riddle-table">
+                            <thead>
+                                <tr>
+                                    <th scope="col">House</th>
+                                    <th scope="col">Color</th>
+                                    <th scope="col">Drink</th>
+                                    <th scope="col">Pet</th>
+                                    <th scope="col">Vehicle</th>
+                                </tr>
+                            </thead>
+                            <tbody id="riddle-grid-body"></tbody>
+                        </table>
+                    </div>
+                </article>
+            </div>
+
+            <div id="riddle-completion-panel" class="completion-panel" hidden>
+                <h3>Riddle Solved!</h3>
+                <p id="riddle-completion-message">You solved the Einstein Riddle. Generate another one whenever you want.</p>
+                <button id="play-another-riddle-button" class="play-another-riddle-button" type="button">Play Another Riddle</button>
+            </div>
+
+            <div class="section-header stats-header">
+                <div>
+                    <p class="eyebrow">Riddle Stats</p>
+                    <h3>Einstein Results</h3>
+                </div>
+                <p class="stats-subtitle">These stats are saved in this browser too.</p>
+            </div>
+
+            <div class="stats-grid">
+                <article class="stats-card">
+                    <span class="stats-label">Total Solved</span>
+                    <strong id="riddle-total-completed" class="stats-value">0</strong>
+                </article>
+                <article class="stats-card">
+                    <span class="stats-label">Best Time</span>
+                    <strong id="riddle-best-time" class="stats-value">--:--</strong>
+                </article>
+                <article class="stats-card">
+                    <span class="stats-label">Average Time</span>
+                    <strong id="riddle-average-time" class="stats-value">--:--</strong>
+                </article>
+                <article class="stats-card">
+                    <span class="stats-label">Last Solve</span>
+                    <strong id="riddle-last-solve" class="stats-value stats-value-small">No riddles solved yet</strong>
+                </article>
+            </div>
+        </section>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
