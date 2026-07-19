@@ -38,6 +38,7 @@ const countdownParts = {
     seconds: document.getElementById("seconds")
 };
 const difficultyButtons = Array.from(document.querySelectorAll(".difficulty-button"));
+const submitSudokuButton = document.getElementById("submit-sudoku-button");
 const newGameButton = document.getElementById("new-game-button");
 const playAgainButton = document.getElementById("play-again-button");
 const riddleStatusElement = document.getElementById("riddle-status");
@@ -701,6 +702,21 @@ function countEinsteinSolutions(clues) {
     return count;
 }
 
+function summarizeEinsteinClues(clues) {
+    const summary = {
+        sameHouse: 0,
+        position: 0,
+        leftOf: 0,
+        nextTo: 0
+    };
+
+    for (const clue of clues) {
+        summary[clue.type] += 1;
+    }
+
+    return summary;
+}
+
 function buildEinsteinCluePool(solution) {
     const clueMap = new Map();
 
@@ -772,27 +788,42 @@ function generateEinsteinSolution() {
 }
 
 function generateEinsteinRiddle() {
-    for (let attempt = 0; attempt < 80; attempt += 1) {
+    for (let attempt = 0; attempt < 200; attempt += 1) {
         const solution = generateEinsteinSolution();
         const cluePool = buildEinsteinCluePool(solution);
         const availableClues = [
-            ...shuffle(cluePool.filter((clue) => clue.type === "sameHouse")),
             ...shuffle(cluePool.filter((clue) => clue.type === "leftOf" || clue.type === "nextTo")),
+            ...shuffle(cluePool.filter((clue) => clue.type === "sameHouse")),
             ...shuffle(cluePool.filter((clue) => clue.type === "position"))
         ];
         const selectedClues = [];
         let remainingSolutions = countEinsteinSolutions(selectedClues);
 
-        while (remainingSolutions > 1 && availableClues.length > 0 && selectedClues.length < 10) {
+        while (remainingSolutions > 1 && availableClues.length > 0 && selectedClues.length < 11) {
             let bestIndex = -1;
             let bestCount = remainingSolutions;
+            let bestScore = Number.NEGATIVE_INFINITY;
 
             for (let index = 0; index < availableClues.length; index += 1) {
-                const nextCount = countEinsteinSolutions([...selectedClues, availableClues[index]]);
+                const nextClues = [...selectedClues, availableClues[index]];
+                const nextCount = countEinsteinSolutions(nextClues);
+                const summary = summarizeEinsteinClues(nextClues);
 
-                if (nextCount < bestCount) {
+                if (summary.position > 2) {
+                    continue;
+                }
+
+                const score =
+                    (remainingSolutions - nextCount) * 100
+                    + summary.leftOf * 9
+                    + summary.nextTo * 8
+                    + summary.sameHouse * 5
+                    - summary.position * 6;
+
+                if (nextCount < bestCount || (nextCount === bestCount && score > bestScore)) {
                     bestCount = nextCount;
                     bestIndex = index;
+                    bestScore = score;
 
                     if (nextCount === 1) {
                         break;
@@ -808,7 +839,28 @@ function generateEinsteinRiddle() {
             remainingSolutions = bestCount;
         }
 
-        if (remainingSolutions === 1 && selectedClues.length >= 6) {
+        if (remainingSolutions !== 1) {
+            continue;
+        }
+
+        const extraClues = shuffle(availableClues.filter((clue) => clue.type !== "position"));
+        while (selectedClues.length < 9 && extraClues.length > 0) {
+            const nextClue = extraClues.pop();
+            if (!nextClue) {
+                break;
+            }
+
+            selectedClues.push(nextClue);
+        }
+
+        const summary = summarizeEinsteinClues(selectedClues);
+
+        if (
+            selectedClues.length >= 8
+            && summary.position <= 2
+            && summary.sameHouse >= 2
+            && (summary.leftOf + summary.nextTo) >= 4
+        ) {
             return {
                 solution,
                 clues: shuffle(selectedClues)
@@ -817,9 +869,10 @@ function generateEinsteinRiddle() {
     }
 
     const fallbackSolution = generateEinsteinSolution();
+    const fallbackClues = buildEinsteinCluePool(fallbackSolution);
     return {
         solution: fallbackSolution,
-        clues: buildEinsteinCluePool(fallbackSolution).slice(0, 8)
+        clues: shuffle(fallbackClues)
     };
 }
 
@@ -971,25 +1024,21 @@ function checkCompletion() {
 
         if (!input.value) {
             hasEmptyCell = true;
-            input.classList.remove("is-error");
             continue;
         }
 
         if (entered !== expected) {
             hasError = true;
-            input.classList.add("is-error");
-        } else {
-            input.classList.remove("is-error");
         }
     }
 
     if (hasError) {
-        updateStatus("There are a few incorrect entries. Keep going.");
+        updateStatus("That is not correct yet. Check your entries and submit again.");
         return;
     }
 
     if (hasEmptyCell) {
-        updateStatus(`Difficulty: ${capitalize(gameState.difficulty)}. Fill every empty square with digits 1 to 9.`);
+        updateStatus("Finish every empty square before submitting the puzzle.");
         return;
     }
 
@@ -1006,9 +1055,9 @@ function handleCellInput(event) {
     const input = event.currentTarget;
     const sanitizedValue = input.value.replace(/[^1-9]/g, "").slice(0, 1);
     input.value = sanitizedValue;
+    input.classList.remove("is-error");
     gameState.currentBoard[Number(input.dataset.row)][Number(input.dataset.col)] = sanitizedValue ? Number(sanitizedValue) : 0;
     saveCurrentGame();
-    checkCompletion();
 }
 
 function renderBoard() {
@@ -1142,7 +1191,7 @@ function checkEinsteinCompletion() {
     const hasEmpty = EINSTEIN_CATEGORY_ORDER.some((category) => riddleState.current[category].some((value) => !value));
 
     if (hasDuplicates) {
-        updateEinsteinStatus("Each color, drink, and pet can only appear once.");
+        updateEinsteinStatus("Each color, drink, pet, and vehicle can only appear once.");
         return;
     }
 
@@ -1330,6 +1379,7 @@ for (const button of difficultyButtons) {
 }
 
 newGameButton.addEventListener("click", startNewGame);
+submitSudokuButton.addEventListener("click", checkCompletion);
 playAgainButton.addEventListener("click", startNewGame);
 newRiddleButton.addEventListener("click", startNewEinsteinRiddle);
 playAnotherRiddleButton.addEventListener("click", startNewEinsteinRiddle);
